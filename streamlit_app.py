@@ -8,8 +8,7 @@ from io import StringIO
 # read AWS credentials from env variables
 AWS_ACCESS_KEY_ID = os.environ["AWS_ACCESS_KEY_ID"]
 AWS_SECRET_ACCESS_KEY = os.environ["AWS_SECRET_ACCESS_KEY"]
-
-st.write("This is the AWS ACCESS KEY ID ", AWS_ACCESS_KEY_ID)
+bucket_name = os.environ["bucket_name"]
 
 # define AWS methods
 CLIENT = boto3.client("s3", aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
@@ -124,3 +123,7 @@ for month, temp in AVG_TEMP.items():
 
 st.markdown("Your annual energy consumption should be **{energy} kWh**".format(energy=round(year_energy_well, 2)))
 st.markdown("Your annual energy bill should be **£ {bill}**".format(bill=round(year_bill_well, 2)))
+
+df = pd.DataFrame({"consumption": [round(year_energy_well, 2)], "bill": [round(year_bill_well, 2)]})
+
+write_csv_to_s3(df=df, filename="test.csv",bucket_name=bucket_name)
