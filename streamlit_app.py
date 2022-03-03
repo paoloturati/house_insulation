@@ -1,5 +1,16 @@
 import streamlit as st
 import numpy as np
+import os
+import boto3
+import pandas as pd
+from io import StringIO
+
+# read AWS credentials from env variables
+AWS_ACCESS_KEY_ID = os.environ["AWS_ACCESS_KEY_ID"]
+AWS_SECRET_ACCESS_KEY = os.environ["AWS_SECRET_ACCESS_KEY"]
+# define AWS methods
+CLIENT = boto3.client("s3", aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
+RESOURCE = boto3.resource("s3", aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
 
 # South-East (2022) https://www.nimblefins.co.uk/average-cost-electricity-kwh-uk
 PRICE_PER_KWH_ELECTRICITY = 0.195
@@ -36,6 +47,21 @@ AVG_TEMP = {
     "Nov": 7.5,
     "Dec": 5.1
 }
+
+def write_csv_to_s3(df, filename, bucket_name):
+
+    # writing file on S3 Bucket
+    csv_buffer = StringIO()
+    df.to_csv(csv_buffer, index=False)
+    # write pandas to csv
+    RESOURCE.Object(bucket_name, filename).put(Body=csv_buffer.getvalue())
+
+def read_csv_from_s3(filename, bucket_name):
+
+    data = CLIENT.get_object(Bucket=bucket_name, Key=filename)["Body"]
+    df = pd.read_csv(data)
+
+    return df
 
 def calculate_energy_for_heating_well_insulated(property_info, temp_gap):
 
