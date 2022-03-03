@@ -5,6 +5,14 @@ import boto3
 import pandas as pd
 from io import StringIO
 
+# read AWS credentials from env variables
+AWS_ACCESS_KEY_ID = os.environ["AWS_ACCESS_KEY_ID"]
+AWS_SECRET_ACCESS_KEY = os.environ["AWS_SECRET_ACCESS_KEY"]
+
+st.write("This is the AWS ACCESS KEY ID ", AWS_ACCESS_KEY_ID)
+# define AWS methods
+CLIENT = boto3.client("s3", aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
+RESOURCE = boto3.resource("s3", aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
 
 # South-East (2022) https://www.nimblefins.co.uk/average-cost-electricity-kwh-uk
 PRICE_PER_KWH_ELECTRICITY = 0.195
