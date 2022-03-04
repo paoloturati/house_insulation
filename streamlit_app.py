@@ -5,6 +5,14 @@ import boto3
 import pandas as pd
 from io import StringIO
 
+# read AWS credentials from env variables
+AWS_ACCESS_KEY_ID = os.environ["AWS_ACCESS_KEY_ID"]
+AWS_SECRET_ACCESS_KEY = os.environ["AWS_SECRET_ACCESS_KEY"]
+bucket_name = os.environ["bucket_name"]
+
+# define AWS methods
+CLIENT = boto3.client("s3", aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
+RESOURCE = boto3.resource("s3", aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
 
 # South-East (2022) https://www.nimblefins.co.uk/average-cost-electricity-kwh-uk
 PRICE_PER_KWH_ELECTRICITY = 0.195
@@ -86,13 +94,13 @@ st.title("House insulation - Reading")
 st.write("Calculate how much you should pay to heat your house")
 st.write("Describe your house")
 
-area_walls = st.number_input("What is the total area of external walls?")
-area_windows = st.number_input("What is the total area of windows?")
-area_floor = st.number_input("What is the area of floor?")
-area_roof = st.number_input("What is the area of roof?")
+area_walls = st.number_input("What is the total area of external walls? (m²)")
+area_windows = st.number_input("What is the total area of windows? (m²)")
+area_floor = st.number_input("What is the area of floor? (m²)")
+area_roof = st.number_input("What is the area of roof? (m²)")
 heat_type = st.selectbox("How are you heating your house?", ["electricity", "gas"])
 hours_heating = st.selectbox("How many hours a day do you heat your home in average?", np.arange(1, 25, 1))
-room_temp = st.number_input("What temperature do you keep at home?")
+room_temp = st.number_input("What temperature do you keep at home?", min_value=15, max_value=25)
 
 property_info = {
     "walls": area_walls,
@@ -115,3 +123,14 @@ for month, temp in AVG_TEMP.items():
 
 st.markdown("Your annual energy consumption should be **{energy} kWh**".format(energy=round(year_energy_well, 2)))
 st.markdown("Your annual energy bill should be **£ {bill}**".format(bill=round(year_bill_well, 2)))
+
+st.write("Press Store data to have your data stored")
+
+# add condition to store data on S3
+form = st.form(key="my-form")
+store_data = form.form_submit_button("Store data")
+
+
+if store_data:
+    df = pd.DataFrame({"consumption": [round(year_energy_well, 2)], "bill": [round(year_bill_well, 2)]})
+    write_csv_to_s3(df=df, filename="test.csv",bucket_name=bucket_name)
