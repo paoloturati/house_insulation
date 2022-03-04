@@ -124,6 +124,13 @@ for month, temp in AVG_TEMP.items():
 st.markdown("Your annual energy consumption should be **{energy} kWh**".format(energy=round(year_energy_well, 2)))
 st.markdown("Your annual energy bill should be **£ {bill}**".format(bill=round(year_bill_well, 2)))
 
-df = pd.DataFrame({"consumption": [round(year_energy_well, 2)], "bill": [round(year_bill_well, 2)]})
+# add condition to store data on S3
 
-write_csv_to_s3(df=df, filename="test.csv",bucket_name=bucket_name)
+form = st.form(key="my-form")
+store_data = form.form_submit_button("Store data")
+
+st.write("Press Store data to have your data stored")
+
+if store_data:
+    df = pd.DataFrame({"consumption": [round(year_energy_well, 2)], "bill": [round(year_bill_well, 2)]})
+    write_csv_to_s3(df=df, filename="test.csv",bucket_name=bucket_name)
