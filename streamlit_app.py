@@ -21,34 +21,30 @@ FIXED_RATE_ELECTRICITY = 85.6
 PRICE_PER_KWH_GAS = 0.0388
 FIXED_RATE_GAS = 95.04
 
+# read file with degree days for Reading
+reading_degree_days_2022 = pd.read_csv("EGUB_HDD_15.5C.csv")
+
 WELL_INSULATED = {
     "walls": 0.25,
     "roof": 0.15,
     "windows": 0.8,
-    "floor": 0.2
+    "floor": 0.2,
+    "ACH": 0.5
 }
 
 POORLY_INSULATED = {
     "walls": 1.5,
     "roof": 1.0,
     "windows": 5.7,
-    "floor": 1.0
+    "floor": 1.0,
+    "ACH": 1.3
 }
-
-AVG_TEMP = {
-    "Jan": 4.8,
-    "Feb": 4.8,
-    "Mar": 7.1,
-    "Apr": 9.1,
-    "May": 12.4,
-    "Jun": 15.3,
-    "Jul": 17.6,
-    "Aug": 17.3,
-    "Sep": 14.6,
-    "Oct": 11.2,
-    "Nov": 7.5,
-    "Dec": 5.1
-}
+# walls height estimated to be 2.5 m
+WALLS_HEIGHT = 2.5
+# temperature used as base temperature for degree days
+DEGREE_DAYS_BASE_TEMP = 15.5
+# heat gain of the building
+HEAT_GAIN = 4
 
 def write_csv_to_s3(df, filename, bucket_name):
 
@@ -65,30 +61,42 @@ def read_csv_from_s3(filename, bucket_name):
 
     return df
 
-def calculate_energy_for_heating_well_insulated(property_info, temp_gap):
+def calculate_energy_for_heating_well_insulated(property_info, temp_gap, month):
 
+    # calculate the area of each components of the external surface
+    area_floor = property_info["floor"]
+    area_roof = area_floor
+    area_windows = property_info["windows"]
+    area_walls = property_info["walls"]
+    volume_property = area_floor * WALLS_HEIGHT
     # compute the energy required to maintain the temperature gap for an hour for each component,
     # based on their relative Thermal Transmittance
-    energy_floor = property_info["floor"] * temp_gap * WELL_INSULATED["floor"]
-    energy_roof = property_info["roof"] * temp_gap * WELL_INSULATED["roof"]
-    energy_windows = property_info["windows"] * temp_gap * WELL_INSULATED["windows"]
-    energy_walls = property_info["walls"] * temp_gap * WELL_INSULATED["walls"]
+    energy_floor = area_floor * temp_gap * WELL_INSULATED["floor"]
+    energy_roof = area_roof * temp_gap * WELL_INSULATED["roof"]
+    energy_windows = area_windows * temp_gap * WELL_INSULATED["windows"]
+    energy_walls = area_walls * temp_gap * WELL_INSULATED["walls"]
+    if month in ["06", "07", "08"]:
+        # reduce ACH in summer months
+        energy_infiltration = 0.005 * WELL_INSULATED["ACH"] * 0.7 * volume_property * temp_gap
+    else:
+        energy_infiltration = 0.005 * WELL_INSULATED["ACH"] * volume_property * temp_gap
+
     # add up all components
-    total_energy_hour = energy_floor + energy_roof + energy_windows + energy_walls
-    # compute energy for the full month
-    hours_month = 30 * property_info["hours"]
-    total_energy_month = np.round(total_energy_hour * hours_month / 1000, 2)
+    total_energy_hour = energy_floor + energy_roof + energy_windows + energy_walls + energy_infiltration
+    # compute energy for the full day
+    total_energy_day = np.round((total_energy_hour * property_info["hours"]) / 1000, 2)
 
-    return total_energy_month
+    return total_energy_day
 
-def calculate_bill(month_consumption, fuel):
+def calculate_bill(daily_consumption, fuel):
 
     if fuel == "electricity":
-        total_bill = round(month_consumption * PRICE_PER_KWH_ELECTRICITY + (FIXED_RATE_ELECTRICITY/12), 2)
+        total_bill = round(daily_consumption * PRICE_PER_KWH_ELECTRICITY + (FIXED_RATE_ELECTRICITY/365), 2)
     elif fuel == "gas":
-        total_bill = round(month_consumption * PRICE_PER_KWH_GAS + (FIXED_RATE_GAS/12), 2)
+        total_bill = round(daily_consumption * PRICE_PER_KWH_GAS + (FIXED_RATE_GAS/365), 2)
 
     return total_bill
+
 
 st.title("House insulation - Reading")
 st.write("Calculate how much you should pay to heat your house")
@@ -96,8 +104,8 @@ st.write("Describe your house")
 
 area_walls = st.number_input("What is the total area of external walls? (m²)")
 area_windows = st.number_input("What is the total area of windows? (m²)")
-area_floor = st.number_input("What is the area of floor? (m²)")
-area_roof = st.number_input("What is the area of roof? (m²)")
+area_floor = st.number_input("What is the area of floor? (m²) (Leave 0 if there's another property below yours)")
+area_roof = st.number_input("What is the area of roof? (m²) (Leave 0 if there's another property above yours)")
 heat_type = st.selectbox("How are you heating your house?", ["electricity", "gas"])
 hours_heating = st.selectbox("How many hours a day do you heat your home in average?", np.arange(1, 25, 1))
 room_temp = st.number_input("What temperature do you keep at home?", min_value=15, max_value=25)
@@ -114,23 +122,15 @@ property_info = {
 
 year_bill_well = 0
 year_energy_well = 0
-for month, temp in AVG_TEMP.items():
-    temp_gap = max(property_info["room_temp"] - temp, 0)
-    energy_month_well = calculate_energy_for_heating_well_insulated(property_info, temp_gap)
-    year_energy_well += energy_month_well
-    month_bill_well = calculate_bill(energy_month_well, property_info["heat_type"])
-    year_bill_well += month_bill_well
 
-st.markdown("Your annual energy consumption should be **{energy} kWh**".format(energy=round(year_energy_well, 2)))
-st.markdown("Your annual energy bill should be **£ {bill}**".format(bill=round(year_bill_well, 2)))
+# here we calculate the bill daily
+for i, row in reading_degree_days_2022.iloc[:365].iterrows():
+    temp_gap = room_temp - HEAT_GAIN - DEGREE_DAYS_BASE_TEMP + row["HDD 15.5"]
+    month = row["Date"].split("/")[1]
+    energy_day_well = calculate_energy_for_heating_well_insulated(property_info, temp_gap, month)
+    day_bill_well = calculate_bill(energy_day_well, heat_type)
+    year_bill_well += day_bill_well
+    year_energy_well += energy_day_well
 
-st.write("Press Store data to have your data stored")
-
-# add condition to store data on S3
-form = st.form(key="my-form")
-store_data = form.form_submit_button("Store data")
-
-
-if store_data:
-    df = pd.DataFrame({"consumption": [round(year_energy_well, 2)], "bill": [round(year_bill_well, 2)]})
-    write_csv_to_s3(df=df, filename="test.csv",bucket_name=bucket_name)
+st.markdown("Your annual energy consumption due to heating should be **{energy} kWh**".format(energy=round(year_energy_well, 2)))
+st.markdown("Your annual energy bill (for heating only) should be **£ {bill}**".format(bill=round(year_bill_well, 2)))
