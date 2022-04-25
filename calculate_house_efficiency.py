@@ -1,71 +1,12 @@
 import streamlit as st
 import numpy as np
 import pandas as pd
+from Library import calculate_energy_consumption
+from Library import consts
 
-WELL_INSULATED = {
-    "walls": 0.25,
-    "roof": 0.15,
-    "windows": 0.8,
-    "floor": 0.2,
-    "ACH": 0.5
-}
 
-POORLY_INSULATED = {
-    "walls": 1.5,
-    "roof": 1.0,
-    "windows": 5.7,
-    "floor": 1.0,
-    "ACH": 1.3
-}
-# walls height estimated to be 2.5 m
-WALLS_HEIGHT = 2.5
-# temperature used as base temperature for degree days
-DEGREE_DAYS_BASE_TEMP = 15.5
-# heat gain of the building
-HEAT_GAIN = 0
-
-def calculate_energy_for_heating_well_insulated(property_info, temp_gap, month, hours_day):
-
-    volume_property = property_info["area_floor"] * property_info["floors"] * WALLS_HEIGHT
-    # compute the energy required to maintain the temperature gap for an hour for each component,
-    # based on their relative Thermal Transmittance
-    energy_floor = property_info["area_floor"] * temp_gap * WELL_INSULATED["floor"]
-    energy_roof = property_info["area_roof"]  * temp_gap * WELL_INSULATED["roof"]
-    energy_windows = property_info["area_windows"] * temp_gap * WELL_INSULATED["windows"]
-    energy_walls = property_info["area_walls"] * temp_gap * WELL_INSULATED["walls"]
-    if month in ["06", "07", "08"]:
-        # reduce ACH in summer months
-        energy_infiltration = 0.005 * WELL_INSULATED["ACH"] * 0.7 * volume_property * temp_gap
-    else:
-        energy_infiltration = 0.005 * WELL_INSULATED["ACH"] * volume_property * temp_gap
-
-    # add up all components
-    total_energy_hour = energy_floor + energy_roof + energy_windows + energy_walls + energy_infiltration
-    # compute energy for the full day
-    total_energy_day = np.round((total_energy_hour * hours_day) / 1000, 2)
-
-    return total_energy_day
-def calculate_energy_for_heating_poorly_insulated(property_info, temp_gap, month, hours_day):
-
-    volume_property = property_info["area_floor"] * property_info["floors"] * WALLS_HEIGHT
-    # compute the energy required to maintain the temperature gap for an hour for each component,
-    # based on their relative Thermal Transmittance
-    energy_floor = property_info["area_floor"] * temp_gap * POORLY_INSULATED["floor"]
-    energy_roof = property_info["area_roof"]  * temp_gap * POORLY_INSULATED["roof"]
-    energy_windows = property_info["area_windows"] * temp_gap * POORLY_INSULATED["windows"]
-    energy_walls = property_info["area_walls"] * temp_gap * POORLY_INSULATED["walls"]
-    if month in ["06", "07", "08"]:
-        # reduce ACH in summer months
-        energy_infiltration = 0.005 * POORLY_INSULATED["ACH"] * 0.7 * volume_property * temp_gap
-    else:
-        energy_infiltration = 0.005 * POORLY_INSULATED["ACH"] * volume_property * temp_gap
-
-    # add up all components
-    total_energy_hour = energy_floor + energy_roof + energy_windows + energy_walls + energy_infiltration
-    # compute energy for the full day
-    total_energy_day = np.round((total_energy_hour * hours_day) / 1000, 2)
-
-    return total_energy_day
+# import parameters
+PARAMS = consts.PARAMS["environment"]
 
 st.title("House insulation - Reading")
 st.write("Calculate the energy efficiency of your house")
@@ -84,7 +25,9 @@ property_info = {
     "area_windows": area_windows,
     "area_floor": area_floor,
     "area_roof": area_roof,
-    "floors": floors
+    "floors": floors,
+    "heat_type": None,
+    "walls_height": np.nan
 }
 
 heating_settings = {
@@ -146,10 +89,12 @@ def calculate_efficiency_score(heating_settings, meter_readings, property_info):
 
     # here we calculate the bill daily
     for _, row in df.iterrows():
-        temp_gap = heating_settings["temp"] - HEAT_GAIN - DEGREE_DAYS_BASE_TEMP + row["HDD 15.5"]
+        temp_gap = heating_settings["temp"] - PARAMS["HEAT_GAIN"] - PARAMS["DEGREE_DAYS_BASE_TEMP"] + row["HDD 15.5"]
         month = str(row["Date"]).split("-")[1]
-        energy_day_well = calculate_energy_for_heating_well_insulated(property_info, temp_gap, month, heating_settings["hours"])
-        energy_day_poor = calculate_energy_for_heating_poorly_insulated(property_info, temp_gap, month, heating_settings["hours"])
+        energy_day_well = calculate_energy_consumption.main(property_info, temp_gap, month, heating_settings["hours"],
+                                                            "WELL_INSULATED")
+        energy_day_poor = calculate_energy_consumption.main(property_info, temp_gap, month, heating_settings["hours"],
+                                                            "POORLY_INSULATED")
         total_energy_well += energy_day_well
         total_energy_poor += energy_day_poor
 
@@ -161,4 +106,9 @@ def calculate_efficiency_score(heating_settings, meter_readings, property_info):
 
 efficiency = calculate_efficiency_score(property_info=property_info, meter_readings=meter_readings, heating_settings=heating_settings)
 
-st.markdown("Your house efficiency score is **{score}**".format(score=efficiency))
+# section to show results
+submit = st.button("Calculate")
+st.write("Click Calculate to see your figures")
+
+if submit:
+    st.markdown("Your house efficiency score is **{score}**".format(score=efficiency))
