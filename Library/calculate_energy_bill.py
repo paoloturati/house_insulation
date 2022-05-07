@@ -3,6 +3,7 @@ from Library import consts
 # import parameters
 PARAMS = consts.PARAMS["energy_tarifs"]
 
+
 def main(daily_consumption, fuel):
     """
     This function, given the daily energy consumption and the heating type,
@@ -19,6 +20,8 @@ def main(daily_consumption, fuel):
             Daily cost for energy consumption (expressed in GBP)
     """
 
-    total_bill = round(daily_consumption * PARAMS[fuel]["kWh"] + (PARAMS[fuel]["fixed_rate"]/365), 2)
+    total_bill = round(
+        daily_consumption * PARAMS[fuel]["kWh"] + (PARAMS[fuel]["fixed_rate"] / 365), 2
+    )
 
     return total_bill

@@ -1,13 +1,7 @@
 PARAMS = {
     "energy_tarifs": {
-        "electricity": {
-            "fixed_rate": 85.6,
-            "kWh": 0.195
-        },
-        "gas": {
-            "fixed_rate": 95.04,
-            "kWh": 0.0388
-        }
+        "electricity": {"fixed_rate": 85.6, "kWh": 0.195},
+        "gas": {"fixed_rate": 95.04, "kWh": 0.0388},
     },
     "property_info": {
         "WALLS_HEIGHT": 2.5,
@@ -16,14 +10,14 @@ PARAMS = {
             "roof": 0.15,
             "windows": 0.8,
             "floor": 0.2,
-            "ACH": 0.5
+            "ACH": 0.5,
         },
         "POORLY_INSULATED": {
             "walls": 1.5,
             "roof": 1.0,
             "windows": 5.7,
             "floor": 1.0,
-            "ACH": 1.3
+            "ACH": 1.3,
         },
     },
     "environment": {
@@ -42,6 +36,6 @@ PARAMS = {
             "10": 0.005,
             "11": 0.005,
             "12": 0.005,
-        }
-    }
+        },
+    },
 }
