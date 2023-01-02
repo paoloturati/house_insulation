@@ -1,7 +1,7 @@
 PARAMS = {
     "energy_tarifs": {
-        "electricity": {"fixed_rate": 85.6, "kWh": 0.195},
-        "gas": {"fixed_rate": 95.04, "kWh": 0.0388},
+        "electricity": {"fixed_rate": 85.6, "kWh": 0.34},
+        "gas": {"fixed_rate": 95.04, "kWh": 0.103},
     },
     "property_info": {
         "WALLS_HEIGHT": 2.5,
