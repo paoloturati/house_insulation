@@ -1,6 +1,6 @@
 # House Insulation
 
-The code included in this repo produces two Streamlit Web Apps: one to compute the ideal Energy Bill for a given house (https://paoloturati-house-insulation-calculate-energy-bills-n2lzvy.streamlit.app/), one to compute the actual Energy Efficiency of the house (https://paoloturati-house-insulation-calculate-house-efficiency-g7ikc3.streamlit.app/).
+The code included in this repo produces three Streamlit Web Apps: one to compute the ideal Energy Bill for a given house (https://paoloturati-house-insulation-calculate-energy-bills-n2lzvy.streamlit.app/), one to compute the actual Energy Efficiency of the house (https://paoloturati-house-insulation-calculate-house-efficiency-g7ikc3.streamlit.app/), one to check the average energy efficiency and insulation in Reading streets.
 
 ## Background
 
@@ -30,6 +30,19 @@ Obviously the real energy bills take into account **all** the energy consumed ac
 **Disclaimer 2**
 
 Since the Degree Days data is a static file, please only select periods of time between February 2021 and February 2022.
+
+## Check Your Street App
+
+This Web App requires you to enter one street name in the Reading area and displays several features from the EPC registry, namely:
+- number of properties
+- percentage of properties with roof insulation
+- percentage of properties with walls insulation
+- percentage of properties with windows insulation
+- percentage of properties with floor insulation
+- average energy consumption
+- average CO2 emissions
+- average energy efficiency
+- percentage of properties with a "good" rating (A/B/C/D)
 
 ### Streamlit deployment
 
