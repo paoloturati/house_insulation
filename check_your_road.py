@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 
 # read file with Reading streets
-reading_streets_mapping = pd.read_csv("Mapping_Reading_housing_stock.csv")
+reading_streets_mapping = pd.read_csv("Mapping_Reading_housing_stock_v2.csv")
 
 st.title("Check Your Street - Reading")
 st.write("See the average energy efficiency and insulation of houses in Reading streets")
@@ -17,15 +17,37 @@ df = reading_streets_mapping[reading_streets_mapping["road"]==street_name].copy(
 if df.empty:
     st.write("No street selected")
 else:
+    # extract street metrics
     num_properties = df["num_properties"].iloc[0]
-    perc_insulated_roof = df["insulated_roof"].iloc[0]
-    perc_insulated_walls = df["insulated_walls"].iloc[0]
-    perc_insulated_windows = df["insulated_windows"].iloc[0]
-    perc_insulated_floor = df["insulated_floor"].iloc[0]
+    # insulation absolute numbers
+    properties_roof_insulation = df["properties_roof_insulation"].iloc[0]
+    properties_walls_insulation = df["properties_walls_insulation"].iloc[0]
+    properties_windows_insulation = df["properties_windows_insulation"].iloc[0]
+    properties_floor_insulation = df["properties_floor_insulation"].iloc[0]
+    # insulation percentages
+    perc_roof_insulation = df["perc_properties_roof_insulation"].iloc[0]
+    perc_walls_insulation = df["perc_properties_walls_insulation"].iloc[0]
+    perc_windows_insulation = df["perc_properties_windows_insulation"].iloc[0]
+    perc_floor_insulation = df["perc_properties_floor_insulation"].iloc[0]
+    # emission and consumption metrics
     avg_CO2_emissions = df["avg_CO2_emissions"].iloc[0]
     avg_energy_consumption = df["avg_energy_consumption"].iloc[0]
     avg_energy_efficiency = df["avg_energy_efficiency"].iloc[0]
-    perc_good_rating = df["good_rating"].iloc[0]
+    # breakdown of properties
+    properties_A = df["properties_A_rating"].iloc[0]
+    properties_B = df["properties_B_rating"].iloc[0]
+    properties_C = df["properties_C_rating"].iloc[0]
+    properties_D = df["properties_D_rating"].iloc[0]
+    properties_E = df["properties_E_rating"].iloc[0]
+    properties_F = df["properties_F_rating"].iloc[0]
+    properties_G = df["properties_G_rating"].iloc[0]
+    perc_A = df["perc_properties_A_rating"].iloc[0]
+    perc_B = df["perc_properties_B_rating"].iloc[0]
+    perc_C = df["perc_properties_C_rating"].iloc[0]
+    perc_D = df["perc_properties_D_rating"].iloc[0]
+    perc_E = df["perc_properties_E_rating"].iloc[0]
+    perc_F = df["perc_properties_F_rating"].iloc[0]
+    perc_G = df["perc_properties_G_rating"].iloc[0]
     # print number of properties
     st.markdown(
         "Number of properties on {street_name}: **{num_properties}**".format(
@@ -33,32 +55,36 @@ else:
             num_properties=num_properties
         )
     )
-    # print percentage of properties with insulated roof
+    # print properties with insulated roof
     st.markdown(
-        "Percentage of properties on {street_name} with ROOF insulation: **{perc_insulated_roof}**".format(
+        "Properties on {street_name} with ROOF insulation: **{insulated_properties}** ({perc_insulated_properties}%)".format(
             street_name=street_name,
-            perc_insulated_roof=perc_insulated_roof
+            insulated_properties=properties_roof_insulation,
+            perc_insulated_properties=perc_roof_insulation
         )
     )
-    # print percentage of properties with insulated walls
+    # print properties with insulated walls
     st.markdown(
-        "Percentage of properties on {street_name} with WALLS insulation: **{perc_insulated_walls}**".format(
+        "Properties on {street_name} with WALLS insulation: **{insulated_properties}** ({perc_insulated_properties}%)".format(
             street_name=street_name,
-            perc_insulated_walls=perc_insulated_walls
+            insulated_properties=properties_walls_insulation,
+            perc_insulated_properties=perc_walls_insulation
         )
     )
-    # print percentage of properties with insulated windows
+    # print properties with insulated windows
     st.markdown(
-        "Percentage of properties on {street_name} with WINDOWS insulation: **{perc_insulated_windows}**".format(
+        "Properties on {street_name} with WINDOWS insulation: **{insulated_properties}** ({perc_insulated_properties}%)".format(
             street_name=street_name,
-            perc_insulated_windows=perc_insulated_windows
+            insulated_properties=properties_windows_insulation,
+            perc_insulated_properties=perc_windows_insulation
         )
     )
-    # print percentage of properties with insulated floor
+    # print properties with insulated floor
     st.markdown(
-        "Percentage of properties on {street_name} with FLOOR insulation: **{perc_insulated_floor}**".format(
+        "Properties on {street_name} with FLOOR insulation: **{insulated_properties}** ({perc_insulated_properties}%)".format(
             street_name=street_name,
-            perc_insulated_floor=perc_insulated_floor
+            insulated_properties=properties_floor_insulation,
+            perc_insulated_properties=perc_floor_insulation
         )
     )
     # print average energy consumption
@@ -82,10 +108,53 @@ else:
             avg_energy_efficiency=avg_energy_efficiency
         )
     )
-    # print percentage of properties with good rating
+    # print properties' ratings
     st.markdown(
-        "Percentage of properties on {street_name} with GOOD EPC rating (A-B-C-D): **{perc_good_rating}**".format(
+        "Properties on {street_name} with EPC A: **{properties_rating}** ({perc_rating}%)".format(
             street_name=street_name,
-            perc_good_rating=perc_good_rating
+            properties_rating=properties_A,
+            perc_rating=perc_A
+        )
+    )
+    st.markdown(
+        "Properties on {street_name} with EPC B: **{properties_rating}** ({perc_rating}%)".format(
+            street_name=street_name,
+            properties_rating=properties_B,
+            perc_rating=perc_B
+        )
+    )
+    st.markdown(
+        "Properties on {street_name} with EPC C: **{properties_rating}** ({perc_rating}%)".format(
+            street_name=street_name,
+            properties_rating=properties_C,
+            perc_rating=perc_C
+        )
+    )
+    st.markdown(
+        "Properties on {street_name} with EPC D: **{properties_rating}** ({perc_rating}%)".format(
+            street_name=street_name,
+            properties_rating=properties_D,
+            perc_rating=perc_D
+        )
+    )
+    st.markdown(
+        "Properties on {street_name} with EPC E: **{properties_rating}** ({perc_rating}%)".format(
+            street_name=street_name,
+            properties_rating=properties_E,
+            perc_rating=perc_E
+        )
+    )
+    st.markdown(
+        "Properties on {street_name} with EPC F: **{properties_rating}** ({perc_rating}%)".format(
+            street_name=street_name,
+            properties_rating=properties_F,
+            perc_rating=perc_F
+        )
+    )
+    st.markdown(
+        "Properties on {street_name} with EPC G: **{properties_rating}** ({perc_rating}%)".format(
+            street_name=street_name,
+            properties_rating=properties_G,
+            perc_rating=perc_G
         )
     )
